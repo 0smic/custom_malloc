@@ -1,1 +1,173 @@
+#include <stdio.h>
+#include <assert.h>
+#include <stdbool.h>
+#include <stdlib.h>
+#include <stdint.h>
+
+#define HEAP_CAPACITY 10000
+#define CHUNK_LIST_CAP 100
+
+#define UNIMPLEMENTED \
+	do { \
+		fprintf(stderr,"%s:%d: TODO: %s is not implemented yet\n", \
+				__FILE__,__LINE__,__func__); \
+		abort(); \
+	} while(0)
+
+typedef struct {
+	void *start;
+	size_t size;
+}Chunk;
+
+
+typedef struct {
+	size_t count;
+	Chunk chunks[CHUNK_LIST_CAP];
+}Chunk_list;
+
+
+char heap[HEAP_CAPACITY] = {0};
+Chunk_list tmp_chunks = {0};
+
+Chunk_list alloced_chunks = {0};
+Chunk_list freed_chunks = {
+	.count = 1,
+	.chunks = {
+		[0] = {.start = heap, .size = sizeof(heap)}
+	},
+};
+
+void dump_chunk_list(const Chunk_list *list){
+	printf("\n Chunks : %lu",(unsigned long)list->count);
+	for(size_t i = 0; i<list->count; i++){
+		printf("\n Start : %p -- size %lu",list->chunks[i].start, (unsigned long)list->chunks[i].size);
+	}
+}
+
+
+
+int chunk_list_find(const Chunk_list *list, void *ptr){
+	for (size_t i = 0; i<list->count; i++){
+		if(list->chunks[i].start == ptr){
+			return (int)i;
+		}
+	}
+	return -1;
+}
+
+void chunk_list_insert(Chunk_list *list, void *start, size_t size){
+	assert(list->count < CHUNK_LIST_CAP);
+	list->chunks[list->count].start = start;
+	list->chunks[list->count].size = size;
+	list->count++; 
+	
+	for(size_t i = list->count - 1; i>0 && list->chunks[i].start < list->chunks[i - 1].start; --i){
+		Chunk tmp = list->chunks[i];
+		list->chunks[i] = list->chunks[i-1];
+		list->chunks[i-1] = tmp;
+	}
+}
+
+void chunk_list_remove(Chunk_list *list, size_t index){
+	assert(index<=list->count);
+	for(int i = index; i<list->count -1; i++){
+		list->chunks[i] = list->chunks[i + 1];
+	}
+	list->count--;	
+}
+
+void chunk_list_merge(Chunk_list *dst, Chunk_list *src){
+	dst->count = 0;
+	for (size_t i = 0; i < src->count; i++) {
+		const Chunk chunk = src->chunks[i];
+
+		if (dst->count == 0) {
+			chunk_list_insert(dst, chunk.start, chunk.size);
+			continue;
+		}
+
+		Chunk *top_chunk = &dst->chunks[dst->count - 1];
+
+		if ((char *)top_chunk->start + top_chunk->size == chunk.start) {
+			// Merge the two chunks
+			top_chunk->size += chunk.size;
+		} else {
+			chunk_list_insert(dst, chunk.start, chunk.size);
+		}
+	}
+}
+
+
+
+
+
+void *heap_alloc(size_t size){
+	if(size == 0 || size <0) return NULL;
+	chunk_list_merge(&tmp_chunks, &freed_chunks);
+	freed_chunks = tmp_chunks;
+	//allocate space in heap
+	for (size_t i =0;i<freed_chunks.count;i++){
+		Chunk chunk = freed_chunks.chunks[i];
+		if(chunk.size >= size){
+			chunk_list_remove(&freed_chunks,i);
+
+			const size_t tail_size = chunk.size - size;
+			chunk_list_insert(&alloced_chunks, chunk.start, size);
+
+			if(tail_size >0){
+				chunk_list_insert(&freed_chunks, chunk.start + size, tail_size);
+			}
+			return chunk.start;
+		}
+	}
+	return NULL;
+}
+void chunk_cpy(void *dest, void *src,size_t size){
+	char *d = (char *)dest;
+	char *s = (char *)src;
+
+	for(size_t i =0;i<size; i++){
+		d[i] = s[i];
+	}
+}
+void heap_free(void *ptr){
+	if(ptr == NULL) return;
+
+	const int index = chunk_list_find(&alloced_chunks, ptr);
+	printf("index %d",index);
+	assert(index >= 0);
+	chunk_list_insert(&freed_chunks, alloced_chunks.chunks[index].start, alloced_chunks.chunks[index].size);
+	chunk_list_remove(&alloced_chunks, (size_t)index);
+	 
+}
+void *heap_realloc(void *ptr, size_t size){
+	if(size == 0) return NULL;
+	if(ptr == NULL) return heap_alloc(size);
+	
+	int index = chunk_list_find(&alloced_chunks, ptr);
+	if(index <0) return NULL;
+
+	Chunk old_chunk = alloced_chunks.chunks[index];
+	if(old_chunk.size >= size) UNIMPLEMENTED;
+	
+	void *new_ptr = heap_alloc(size);
+	if(new_ptr == NULL) return NULL;
+	
+	chunk_cpy(new_ptr, ptr, old_chunk.size);
+
+	heap_free(ptr);
+	return new_ptr;
+		
+
+}
+
+
+
+void heap_colle(){
+
+	assert(false && "TODO: heap_colle is not implemented yet"); 
+}
+
+	
+
 
