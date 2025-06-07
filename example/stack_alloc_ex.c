@@ -1,6 +1,5 @@
-
 #include <stdio.h>
-#include "../includes/stack_alloc.h"
+#include "../include/stack_alloc.h"
 
 typedef struct node{
 	int val;
