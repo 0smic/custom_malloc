@@ -4,6 +4,12 @@
 #include <stdlib.h>
 #include <stdint.h>
 
+/*
+I implemented this allocated as state based, 
+You could use mmap and get memory from os and update the freed_chunks chunks[0].start to the result of mmap
+It should work fine ig, also update according to that like freeing the memory to the os use the munmap
+*/
+
 #define HEAP_CAPACITY 10000
 #define CHUNK_LIST_CAP 100
 
@@ -37,6 +43,7 @@ Chunk_list freed_chunks = {
 	},
 };
 
+/*Dump element in the list provided, ig I'm stupid to explain this to you*/
 void dump_chunk_list(const Chunk_list *list){
 	printf("\n Chunks : %lu",(unsigned long)list->count);
 	for(size_t i = 0; i<list->count; i++){
@@ -45,7 +52,7 @@ void dump_chunk_list(const Chunk_list *list){
 }
 
 
-
+/* find the chunk index from the list, it's linear, you can update it, to a bineary search if you want*/
 int chunk_list_find(const Chunk_list *list, void *ptr){
 	for (size_t i = 0; i<list->count; i++){
 		if(list->chunks[i].start == ptr){
@@ -55,6 +62,8 @@ int chunk_list_find(const Chunk_list *list, void *ptr){
 	return -1;
 }
 
+
+/* It append the chunk in the list at the tail and then it reposition the chunk according to the pointer, it's in ascending*/
 void chunk_list_insert(Chunk_list *list, void *start, size_t size){
 	assert(list->count < CHUNK_LIST_CAP);
 	list->chunks[list->count].start = start;
@@ -68,6 +77,9 @@ void chunk_list_insert(Chunk_list *list, void *start, size_t size){
 	}
 }
 
+/* It remove the chunk from the list, 
+by reaching the index of the chunk and swap it with the adjacent chunk and doing it until chunk reach the tail
+and decreament of the count of the list*/
 void chunk_list_remove(Chunk_list *list, size_t index){
 	assert(index<=list->count);
 	for(int i = index; i<list->count -1; i++){
