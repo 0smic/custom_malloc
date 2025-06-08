@@ -88,6 +88,25 @@ void chunk_list_remove(Chunk_list *list, size_t index){
 	list->count--;	
 }
 
+/*
+It merger the fragmented chunks in the freed_chunks, we merge chunk which are consecutive in the freed_chunks
+It taked another list which is a tmp list and set the count to zero
+iteration through the freed_chunk
+  count == 0
+      so if the count is zero we append the frist element of free_chunks(src) into the tmp_chunk(dest)
+  count !=0
+  	we store the previous chunk into a var top_chunk
+   	then we add top_chunk + size of top_chunk if that is equal to the current chunk of the freed_chunk( meaning it is consecutive)
+        if consecutive
+           we add the current freed_chunk chunk size to the top_chunk size and store it in top_chunk ( meaning we merged)
+	if not consective
+ 	   we append the chunk into the tmp chunk list
+
+      
+
+	
+*/
+
 void chunk_list_merge(Chunk_list *dst, Chunk_list *src){
 	dst->count = 0;
 	for (size_t i = 0; i < src->count; i++) {
