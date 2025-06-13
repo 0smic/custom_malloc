@@ -131,7 +131,13 @@ void chunk_list_merge(Chunk_list *dst, Chunk_list *src){
 
 
 
-
+/*
+This function allocated memory for you.
+Frist it try to merge fragmented chunk in the freed memory, Ik it is expensive you can remove if you want.
+next we iterate through the freed chunks and try to find the suitable chunk.
+There is a chance that the chunk we finc have more space than we needed.
+ So we use the necessary size we want and the rest of them will append in the freed chunk list (there by sorting and sort of things).
+*/
 void *heap_alloc(size_t size){
 	if(size == 0 || size <0) return NULL;
 	chunk_list_merge(&tmp_chunks, &freed_chunks);
@@ -153,6 +159,10 @@ void *heap_alloc(size_t size){
 	}
 	return NULL;
 }
+
+/*
+It copy the data in  the src to dest
+*/
 void chunk_cpy(void *dest, void *src,size_t size){
 	char *d = (char *)dest;
 	char *s = (char *)src;
@@ -161,6 +171,11 @@ void chunk_cpy(void *dest, void *src,size_t size){
 		d[i] = s[i];
 	}
 }
+
+/*
+
+*/
+
 void heap_free(void *ptr){
 	if(ptr == NULL) return;
 
