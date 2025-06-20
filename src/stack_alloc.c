@@ -5,7 +5,7 @@
 #include <stdint.h>
 
 /*
-I implemented this allocated as state based, 
+I implemented this allocated as stack based, 
 You could use mmap and get memory from os and update the freed_chunks chunks[0].start to the result of mmap
 It should work fine ig, also update according to that like freeing the memory to the os use the munmap
 */
@@ -43,7 +43,7 @@ Chunk_list freed_chunks = {
 	},
 };
 
-/*Dump element in the list provided, ig I'm stupid to explain this to you*/
+/*Dump element in the list provided, ig I'm stupid to explain this part to you*/
 void dump_chunk_list(const Chunk_list *list){
 	printf("\n Chunks : %lu",(unsigned long)list->count);
 	for(size_t i = 0; i<list->count; i++){
@@ -135,7 +135,7 @@ void chunk_list_merge(Chunk_list *dst, Chunk_list *src){
 This function allocated memory for you.
 Frist it try to merge fragmented chunk in the freed memory, Ik it is expensive you can remove if you want.
 next we iterate through the freed chunks and try to find the suitable chunk.
-There is a chance that the chunk we finc have more space than we needed.
+There is a chance that the chunk we find have more space than we needed.
  So we use the necessary size we want and the rest of them will append in the freed chunk list (there by sorting and sort of things).
 */
 void *heap_alloc(size_t size){
@@ -161,7 +161,7 @@ void *heap_alloc(size_t size){
 }
 
 /*
-It copy the data in  the src to dest
+It copy the data in  the src to dest 
 */
 void chunk_cpy(void *dest, void *src,size_t size){
 	char *d = (char *)dest;
@@ -173,6 +173,8 @@ void chunk_cpy(void *dest, void *src,size_t size){
 }
 
 /*
+It find the index of the pointer using chunk_list_find func
+and then insert the chunk in the freed_chunks list and remove that chunk from the the alloced_chunks list
 
 */
 
@@ -186,6 +188,18 @@ void heap_free(void *ptr){
 	chunk_list_remove(&alloced_chunks, (size_t)index);
 	 
 }
+
+
+/*
+This function realloc memory. It doesn't resize it instead of that it gives a new pointer to a new chunk with the requested size.
+and it copy all the data in the old chunk to the new chunk
+and free the old chunk.
+
+You can implement the resizing the chunk by just  checking the consecutive chunk of the additional space is is allocated or not.
+if allocated replace with new chunk
+else resize it
+
+*/
 void *heap_realloc(void *ptr, size_t size){
 	if(size == 0) return NULL;
 	if(ptr == NULL) return heap_alloc(size);
@@ -208,10 +222,11 @@ void *heap_realloc(void *ptr, size_t size){
 }
 
 
+/*garbage collector */
 
 void heap_colle(){
 
-	assert(false && "TODO: heap_colle is not implemented yet"); 
+	UNIMPLEMENTED; 
 }
 
 	
